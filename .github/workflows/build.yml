@@ -1,0 +1,101 @@
+name: Build Apps (Android, Windows, Linux, macOS, iOS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Regenerate any missing platform files
+        run: flutter create --project-name hr_management --platforms=android .
+      - run: flutter pub get
+      - name: Build release APK
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  windows:
+    name: Windows EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Regenerate any missing platform files
+        run: flutter create --project-name hr_management --platforms=windows .
+      - run: flutter pub get
+      - name: Build Windows release
+        run: flutter build windows --release
+      - name: Zip the Windows app
+        run: Compress-Archive -Path build/windows/x64/runner/Release/* -DestinationPath hr-management-windows.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: hr-management-windows.zip
+
+  linux:
+    name: Linux App
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Regenerate any missing platform files
+        run: flutter create --project-name hr_management --platforms=linux .
+      - run: flutter pub get
+      - name: Build Linux release
+        run: flutter build linux --release
+      - name: Tar the Linux bundle
+        run: tar -czf hr-management-linux.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-app
+          path: hr-management-linux.tar.gz
+
+  apple:
+    name: macOS + iOS (unsigned)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Regenerate any missing platform files
+        run: flutter create --project-name hr_management --platforms=ios,macos .
+      - run: flutter pub get
+      - name: Build macOS release
+        run: flutter build macos --release
+      - name: Zip macOS app
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r $GITHUB_WORKSPACE/hr-management-macos.zip *.app
+      - name: Build iOS release (no codesign)
+        run: flutter build ios --release --no-codesign
+      - name: Zip iOS app
+        run: |
+          cd build/ios/Release-iphoneos
+          zip -r $GITHUB_WORKSPACE/hr-management-ios-unsigned.zip Runner.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-app
+          path: hr-management-macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-app-unsigned
+          path: hr-management-ios-unsigned.zip
