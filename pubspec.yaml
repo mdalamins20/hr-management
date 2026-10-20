@@ -1,0 +1,24 @@
+name: hr_management
+description: "HR Management - Better People. Stronger Teams. A complete, functional HR app built with Flutter matching the provided UI design."
+publish_to: "none"
+version: 2.0.0+2
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # Local binary storage (works on Android, iOS, Windows, macOS, Linux, Web)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
